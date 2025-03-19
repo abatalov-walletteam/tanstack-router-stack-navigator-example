@@ -5,6 +5,9 @@ import { fetchPosts } from '../posts'
 export const Route = createFileRoute('/posts')({
   loader: fetchPosts,
   component: PostsLayoutComponent,
+  staticData: {
+    stackNavigator: true
+  }
 })
 
 function PostsLayoutComponent() {
@@ -13,7 +16,8 @@ function PostsLayoutComponent() {
   return (
     <div className="p-2 flex gap-2">
       <ul className="list-disc pl-4">
-        {[...posts, { id: 'i-do-not-exist', title: 'Non-existent Post' }].map(
+        <div>📬</div>
+        {posts.map(
           (post) => {
             return (
               <li key={post.id} className="whitespace-nowrap">

@@ -1,6 +1,6 @@
-import * as React from 'react'
-import {Link, Outlet, createRootRoute, useRouter} from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import {createRootRoute, Link, Outlet, useRouter} from '@tanstack/react-router'
+import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
+import {StackNavigatorLink} from "../components/StackNavigatorLink";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -23,7 +23,7 @@ function RootComponent() {
         <button className="back-button" onClick={() => router.history.back()}>
           Назад
         </button>
-        <Link
+        <StackNavigatorLink
           to="/"
           activeProps={{
             className: 'font-bold',
@@ -31,40 +31,23 @@ function RootComponent() {
           activeOptions={{ exact: true }}
         >
           Home
-        </Link>{' '}
-        <Link
+        </StackNavigatorLink>{' '}
+        <StackNavigatorLink
           to="/posts"
           activeProps={{
             className: 'font-bold',
           }}
         >
           Posts
-        </Link>{' '}
-        <Link
-          to="/route-a"
+        </StackNavigatorLink>{' '}
+        <StackNavigatorLink
+          to='/my-pages'
           activeProps={{
             className: 'font-bold',
           }}
         >
-          Pathless Layout
-        </Link>{' '}
-        <Link
-          to="/anchor"
-          activeProps={{
-            className: 'font-bold',
-          }}
-        >
-          Anchor
-        </Link>{' '}
-        <Link
-          // @ts-expect-error
-          to="/this-route-does-not-exist"
-          activeProps={{
-            className: 'font-bold',
-          }}
-        >
-          This Route Does Not Exist
-        </Link>
+          Stack AB
+        </StackNavigatorLink>{' '}
       </div>
       <hr />
       <Outlet />
