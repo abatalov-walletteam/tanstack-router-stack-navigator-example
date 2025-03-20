@@ -1,6 +1,7 @@
 import {createRootRoute, Link, Outlet, useRouter} from '@tanstack/react-router'
 import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
 import {StackNavigatorLink} from "../components/StackNavigatorLink";
+import {useHistoryIndex} from "../historyStore";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -16,12 +17,15 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const router = useRouter()
+  const index = useHistoryIndex();
 
   return (
     <>
       <div className="p-2 flex gap-2 text-lg border-b">
-        <button className="back-button" onClick={() => router.history.back()}>
-          Назад
+        <button
+          disabled={!index}
+          className="back-button" onClick={() => router.history.back()}>
+          🔙
         </button>
         <StackNavigatorLink
           to="/"

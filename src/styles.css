@@ -11,3 +11,7 @@ html {
 body {
   @apply bg-gray-50 text-gray-950 dark:bg-gray-900 dark:text-gray-200;
 }
+
+.back-button:disabled {
+  opacity: 0.3;
+}
