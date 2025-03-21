@@ -1,10 +1,19 @@
-import {createHistory, HistoryState, ParsedHistoryState, parseHref, RouterHistory} from "@tanstack/history";
-import type {AnyRoute} from "@tanstack/router-core";
-import {createRouter} from "@tanstack/react-router";
-import type {ParsedLocation} from "@tanstack/router-core";
-import {Router} from "@tanstack/react-router";
-import {AnySchema} from "@tanstack/router-core/dist/esm/validators";
+import {
+  createHistory,
+  HistoryLocation,
+  HistoryState,
+  ParsedHistoryState,
+  parseHref,
+  RouterHistory
+} from "@tanstack/history";
+import type {AnyRoute, ParsedLocation} from "@tanstack/router-core";
+import {createRouter, defaultParseSearch, Router} from "@tanstack/react-router";
 import {HistoryStore} from './historyStore';
+
+interface HistoryEntry {
+  href: string;
+  historyLocation: HistoryLocation
+}
 
 export function createMemoryHistory(
   routeTree: AnyRoute,
@@ -20,61 +29,80 @@ export function createMemoryHistory(
     routeTree,
   });
 
-  const entries = opts.initialEntries;
+  /**
+   *   const states = entries.map((entry, index) =>
+   *     assignKeyAndIndex(index, {
+   *       stackNavigatorRouteId: getStackedNavigatorRoute(
+   *         utilityRouter,
+   *         entry,
+   *       )?.id
+   *     }),
+   *   );
+   */
+
+  const historyEntries: HistoryEntry[] = opts.initialEntries.map((href, index) => {
+    // todo::maybe `assignKeyAndIndex` is not needed?
+    const historyLocation = parseHref(href, assignKeyAndIndex(index, undefined));
+    const stackNavigatorRoute = getStackedNavigatorRoute(utilityRouter, historyLocation);
+
+    assignStackNavigatorRouteIdState(
+      historyLocation,
+      stackNavigatorRoute,
+    );
+
+    return ({
+      href,
+      historyLocation,
+    });
+  });
 
   historyStore.index = opts.initialIndex
-    ? Math.min(Math.max(opts.initialIndex, 0), entries.length - 1)
-    : entries.length - 1;
+    ? Math.min(Math.max(opts.initialIndex, 0), historyEntries.length - 1)
+    : historyEntries.length - 1;
 
-  let previousStackNavigatorRoute = getStackedNavigatorRoute(
-    utilityRouter,
-    entries[historyStore.index],
-  );
-
-  const states = entries.map((entry, index) =>
-    assignKeyAndIndex(index, {
-      stackNavigatorRouteId: getStackedNavigatorRoute(
-        utilityRouter,
-        entry,
-      )?.id
-    }),
-  );
+  let previousStackNavigatorRouteId = historyEntries[historyStore.index].historyLocation.state.stackNavigatorRouteId;
 
   console.log(
-    '🚐 Initial states', states
+    '🚐 Initial history entries', historyEntries
   );
 
-  const getLocation = () => parseHref(entries[historyStore.index]!, states[historyStore.index]);
-
   return createHistory({
-    getLocation,
-    getLength: () => entries.length,
-    pushState: (pathname: string, state: ParsedHistoryState) => {
+    getLocation: () => {
+      console.log('📬', historyEntries.map(entry => entry.href))
+      return historyEntries[historyStore.index].historyLocation;
+    },
+    getLength: () => historyEntries.length,
+    pushState: (href: string, state: ParsedHistoryState) => {
+      const historyLocation = parseHref(href, state);
       const stackNavigatorRoute = getStackedNavigatorRoute(
         utilityRouter,
-        pathname,
+        historyLocation,
+      );
+
+      assignStackNavigatorRouteIdState(
+        historyLocation,
+        stackNavigatorRoute,
       );
 
       let stackStartIndex;
       let stackEndIndex;
-      let pathnameStackEndIndex;
+      let hrefStackEndIndex;
 
       if (stackNavigatorRoute?.id &&
-        stackNavigatorRoute.id !== previousStackNavigatorRoute?.id) {
+        stackNavigatorRoute.id !== previousStackNavigatorRouteId) {
 
-        for (let i = states.length - 1; i >= 0; i--) {
-          const stateItem = states[i];
+        for (let i = historyEntries.length - 1; i >= 0; i--) {
+          const entry = historyEntries[i];
 
-          if (stateItem.stackNavigatorRouteId === stackNavigatorRoute.id) {
+          if (entry.historyLocation.state.stackNavigatorRouteId === stackNavigatorRoute.id) {
             if (stackEndIndex === undefined) {
               stackEndIndex = i;
             }
 
-            if (pathnameStackEndIndex === undefined && entries[i] === pathname) {
-              pathnameStackEndIndex = i;
+            if (hrefStackEndIndex === undefined && entry.href === href) {
+              hrefStackEndIndex = i;
             }
-          }
-          else if (stackEndIndex !== undefined) {
+          } else if (stackEndIndex !== undefined) {
             stackStartIndex = i + 1;
             break;
           }
@@ -83,32 +111,26 @@ export function createMemoryHistory(
         if (stackEndIndex !== undefined) {
           stackStartIndex = stackStartIndex ?? 0;
 
-          const stackEntries = entries.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
+          const stackEntries = historyEntries.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
           stackEntries.splice(stackEntries.length - 1);
-          entries.push(...stackEntries);
+          historyEntries.push(...stackEntries);
 
           console.log(
             '🪄',
             {
-              entries: structuredClone(entries),
+              historyEntries: structuredClone(historyEntries),
               stackEntries: structuredClone(stackEntries)
             },
-            { stackStartIndex, stackEndIndex, pathnameStackEndIndex }
+            {stackStartIndex, stackEndIndex, hrefStackEndIndex: hrefStackEndIndex}
           );
 
-          const stackStates = states.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
-          stackStates.splice(stackStates.length - 1);
-          states.push(...stackStates);
-
-          historyStore.index = entries.length - 1;
+          historyStore.index = historyEntries.length - 1;
         }
-      }
-      else if (
-        stackNavigatorRoute?.id === previousStackNavigatorRoute?.id &&
-        pathname === entries[historyStore.index]
+      } else if (
+        stackNavigatorRoute?.id === previousStackNavigatorRouteId &&
+        href === historyEntries[historyStore.index].href
       ) {
-        entries.splice(entries.length - 1);
-        states.splice(states.length - 1);
+        historyEntries.splice(historyEntries.length - 1);
       }
 
       console.log(
@@ -117,41 +139,45 @@ export function createMemoryHistory(
         stackNavigatorRoute?.id,
       )
 
-      previousStackNavigatorRoute = stackNavigatorRoute;
+      previousStackNavigatorRouteId = stackNavigatorRoute?.id;
 
-      // Removes all subsequent entries after the current index to start a new branch
-      if (historyStore.index < entries.length - 1) {
-        entries.splice(historyStore.index + 1);
-        states.splice(historyStore.index + 1);
+      if (historyStore.index < historyEntries.length - 1) {
+        historyEntries.splice(historyStore.index + 1);
       }
-      states.push({
-        ...state,
-        stackNavigatorRouteId: stackNavigatorRoute?.id,
+
+      historyEntries.push({
+        href: href,
+        historyLocation,
       });
-      entries.push(pathname);
-      historyStore.index = Math.max(entries.length - 1, 0);
+
+      historyStore.index = Math.max(historyEntries.length - 1, 0);
     },
-    replaceState: (pathname: string, state: ParsedHistoryState) => {
+    replaceState: (href: string, state: ParsedHistoryState) => {
+      const historyLocation = parseHref(href, state);
       const stackNavigatorRoute = getStackedNavigatorRoute(
         utilityRouter,
-        pathname,
+        historyLocation,
+      );
+
+      assignStackNavigatorRouteIdState(
+        historyLocation,
+        stackNavigatorRoute,
       );
 
       if (stackNavigatorRoute?.id &&
-        stackNavigatorRoute.id !== previousStackNavigatorRoute?.id) {
+        stackNavigatorRoute.id !== previousStackNavigatorRouteId) {
 
         let stackStartIndex;
         let stackEndIndex;
 
-        for (let i = states.length - 1; i >= 0; i--) {
-          const stateItem = states[i];
+        for (let i = historyEntries.length - 1; i >= 0; i--) {
+          const entry = historyEntries[i];
 
-          if (stateItem.stackNavigatorRouteId === stackNavigatorRoute.id) {
+          if (entry.historyLocation.state.stackNavigatorRouteId === stackNavigatorRoute.id) {
             if (stackEndIndex === undefined) {
               stackEndIndex = i;
             }
-          }
-          else if (stackEndIndex !== undefined) {
+          } else if (stackEndIndex !== undefined) {
             stackStartIndex = i + 1;
             break;
           }
@@ -160,45 +186,47 @@ export function createMemoryHistory(
         if (stackEndIndex !== undefined) {
           stackStartIndex = stackStartIndex ?? 0;
 
-          const stackEntries = entries.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
+          const stackEntries = historyEntries.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
           stackEntries.splice(stackEntries.length - 1);
-          entries[historyStore.index] = pathname;
-
-          const stackStates = states.splice(stackStartIndex, (stackEndIndex - stackStartIndex) + 1);
-          stackStates.splice(stackStates.length - 1);
-          states[historyStore.index] = {
-            ...state,
-            stackNavigatorRouteId: stackNavigatorRoute?.id,
+          historyEntries[historyStore.index] = {
+            href: href,
+            historyLocation,
           };
         }
       } else {
-        states[historyStore.index] = {
-          ...state,
-          stackNavigatorRouteId: stackNavigatorRoute?.id,
+        historyEntries[historyStore.index] = {
+          href: href,
+          historyLocation,
         };
-        entries[historyStore.index] = pathname;
       }
 
-      previousStackNavigatorRoute = stackNavigatorRoute;
+      previousStackNavigatorRouteId = stackNavigatorRoute?.id;
     },
     back: () => {
       historyStore.index = Math.max(historyStore.index - 1, 0);
     },
     forward: () => {
-      historyStore.index = Math.min(historyStore.index + 1, entries.length - 1);
+      historyStore.index = Math.min(historyStore.index + 1, historyEntries.length - 1);
     },
     go: (n) => {
-      historyStore.index = Math.min(Math.max(historyStore.index + n, 0), entries.length - 1);
+      historyStore.index = Math.min(Math.max(historyStore.index + n, 0), historyEntries.length - 1);
     },
     createHref: (path: string) => path,
   });
 }
 
-function getStackedNavigatorRoute(utilityRouter: Router<any>, pathname: string, search: AnySchema = {}): AnyRoute | undefined {
-  const matchingRoute = utilityRouter.getMatchedRoutes({
-    pathname,
-    search: {},
-  } as ParsedLocation);
+function createParsedLocation(
+  historyLocation: HistoryLocation,
+): ParsedLocation {
+  return {
+    ...historyLocation,
+    search: defaultParseSearch(historyLocation.search),
+    searchStr: historyLocation.search
+  }
+}
+
+function getStackedNavigatorRoute(utilityRouter: Router<any>, location: HistoryLocation): AnyRoute | undefined {
+  const matchingRoute = utilityRouter.getMatchedRoutes(createParsedLocation(location));
 
   const reversedMatchedRouted = matchingRoute.matchedRoutes.concat().reverse();
 
@@ -225,4 +253,11 @@ function assignKeyAndIndex(index: number, state: HistoryState | undefined) {
 function createRandomKey() {
   return (Math.random() + 1).toString(36).substring(7);
 }
-
+function assignStackNavigatorRouteIdState(historyLocation: HistoryLocation, stackNavigatorRoute: AnyRoute | undefined) {
+  Object.assign(historyLocation, {
+    state: {
+      ...historyLocation.state,
+      stackNavigatorRouteId: stackNavigatorRoute?.id,
+    }
+  })
+}
