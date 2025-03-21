@@ -1,6 +1,6 @@
 import {createFileRoute, Link, Outlet} from '@tanstack/react-router'
 
-export const Route = createFileRoute('/my-pages')({
+export const Route = createFileRoute('/_my-pages')({
   component: LayoutComponent,
   staticData: {
     stackNavigator: true
@@ -13,7 +13,7 @@ function LayoutComponent() {
       <div>I'm a nested pathless layout</div>
       <div className="flex gap-2 border-b">
         <Link
-          to="/my-pages/page-a"
+          to="/page-a"
           activeProps={{
             className: 'font-bold',
           }}
@@ -21,7 +21,7 @@ function LayoutComponent() {
           Go Page A
         </Link>
         <Link
-          to="/my-pages/page-b"
+          to="/page-b"
           activeProps={{
             className: 'font-bold',
           }}

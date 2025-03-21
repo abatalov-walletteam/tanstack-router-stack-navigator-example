@@ -1,14 +1,26 @@
-import {Link, LinkComponent, useMatches} from '@tanstack/react-router'
-import {useMemo, useRef} from "react";
+import {Link, LinkComponent, useMatches, useRouter} from '@tanstack/react-router'
+import {forwardRef, useMemo, useRef} from "react";
 import {undefined} from "zod";
 
+// @ts-expect-error
+export const StackResumeLink: LinkComponent<'a'> = forwardRef(function StackResumeLink(props, ref) {
+  const router = useRouter();
 
-// todo::add forwardRef
-export const StackNavigatorLink: LinkComponent<typeof Link> = ({to, params, search, hash, ...props}) => {
+  const linkStackNavigatorRoute = useMemo(() => {
+    const routesMatch = router.getMatchedRoutes(
+      router.buildLocation(
+        // @ts-expect-error
+        props
+      )
+    );
+
+    return routesMatch.matchedRoutes.concat().reverse().find(route => route.options.staticData?.stackNavigator)
+  }, [router, props])
+
   const activeRoute = useMatches({
     select(routes) {
       return routes.some(
-        route => route.fullPath === to
+        route => route.id === linkStackNavigatorRoute?.id
       ) ? routes : noopArray;
     }
   }).at(-1);
@@ -25,12 +37,12 @@ export const StackNavigatorLink: LinkComponent<typeof Link> = ({to, params, sear
 
   if (!activeRoute && previousParsedLocation) {
     // @ts-expect-error
-    return <Link {...props} {...previousParsedLocation} />
+    return <Link {...props} {...previousParsedLocation} ref={ref} />
   }
-    // @ts-expect-error
-  return <Link {...props} to={to} />
 
-}
+  // @ts-expect-error
+  return <Link {...props} ref={ref} />
+});
 
 
 function usePrevious<T>(value: T): T | null {

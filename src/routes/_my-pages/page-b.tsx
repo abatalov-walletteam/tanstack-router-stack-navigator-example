@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/my-pages/page-b')(
+export const Route = createFileRoute('/_my-pages/page-b')(
   {
     component: LayoutBComponent,
   },

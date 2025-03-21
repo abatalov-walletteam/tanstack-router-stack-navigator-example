@@ -1,6 +1,6 @@
 import {createRootRoute, Link, Outlet, useRouter} from '@tanstack/react-router'
 import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
-import {StackNavigatorLink} from "../components/StackNavigatorLink";
+import {StackResumeLink} from "../components/StackResumeLink";
 import {useHistoryIndex} from "../historyStore";
 
 export const Route = createRootRoute({
@@ -27,7 +27,7 @@ function RootComponent() {
           className="back-button" onClick={() => router.history.back()}>
           🔙
         </button>
-        <StackNavigatorLink
+        <StackResumeLink
           to="/"
           activeProps={{
             className: 'font-bold',
@@ -35,23 +35,23 @@ function RootComponent() {
           activeOptions={{ exact: true }}
         >
           Home
-        </StackNavigatorLink>{' '}
-        <StackNavigatorLink
+        </StackResumeLink>{' '}
+        <StackResumeLink
           to="/posts"
           activeProps={{
             className: 'font-bold',
           }}
         >
           Posts
-        </StackNavigatorLink>{' '}
-        <StackNavigatorLink
-          to='/my-pages'
+        </StackResumeLink>{' '}
+        <StackResumeLink
+          to='/page-a'
           activeProps={{
             className: 'font-bold',
           }}
         >
           Stack AB
-        </StackNavigatorLink>{' '}
+        </StackResumeLink>{' '}
       </div>
       <hr />
       <Outlet />
