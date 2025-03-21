@@ -1,4 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import {createFileRoute, Outlet} from '@tanstack/react-router'
+import {StackResumeLink} from "../../components/StackResumeLink";
 
 export const Route = createFileRoute('/_my-pages/page-b')(
   {
@@ -7,5 +8,10 @@ export const Route = createFileRoute('/_my-pages/page-b')(
 )
 
 function LayoutBComponent() {
-  return <div>I'm layout B!</div>
+  return (
+    <div>
+      <h2>I'm 🔲 Layout B!</h2>
+      <Outlet />
+    </div>
+  );
 }

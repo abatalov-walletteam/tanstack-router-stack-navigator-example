@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_my-pages/page-a')(
 )
 
 function LayoutAComponent() {
-  return <div>I'm layout A!</div>
+  return <div>I'm 📃 Page A!</div>
 }
