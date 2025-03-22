@@ -1,9 +1,12 @@
-import {createRootRoute, Link, Outlet, useRouter} from '@tanstack/react-router'
+import {createRootRouteWithContext, Link, Outlet, useRouter} from '@tanstack/react-router'
 import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
 import {StackResumeLink} from "../components/StackResumeLink";
 import {useHistoryIndex} from "../historyStore";
+import {createStackResumeLinkStore, StackResumeLinkProvider} from "../components/StackResumeLinkProvider";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  stackNavigatorLocationsStore: ReturnType<typeof createStackResumeLinkStore>
+}>()({
   component: RootComponent,
   notFoundComponent: () => {
     return (
@@ -18,9 +21,11 @@ export const Route = createRootRoute({
 function RootComponent() {
   const router = useRouter()
   const index = useHistoryIndex();
+  const {stackNavigatorLocationsStore} = Route.useRouteContext();
+
 
   return (
-    <>
+    <StackResumeLinkProvider store={stackNavigatorLocationsStore}>
       <div className="p-2 flex gap-2 text-lg border-b">
         <button
           disabled={!index}
@@ -32,7 +37,7 @@ function RootComponent() {
           activeProps={{
             className: 'font-bold',
           }}
-          activeOptions={{ exact: true }}
+          activeOptions={{exact: true}}
         >
           Home
         </StackResumeLink>{' '}
@@ -51,12 +56,11 @@ function RootComponent() {
           }}
         >
           Stack AB
-        </StackResumeLink>{' '}
+        </StackResumeLink>
       </div>
-      <hr />
-      <Outlet />
-      {/* Start rendering router matches */}
-      <TanStackRouterDevtools position="bottom-right" />
-    </>
+      <hr/>
+      <Outlet/>
+      <TanStackRouterDevtools position="bottom-right"/>
+    </StackResumeLinkProvider>
   )
 }

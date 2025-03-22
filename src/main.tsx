@@ -5,6 +5,7 @@ import { routeTree } from './routeTree.gen'
 import './styles.css'
 import {createMemoryHistory} from "./memoryHistory";
 import {HistoryStore, HistoryStoreContext} from "./historyStore";
+import {createStackResumeLinkStore} from "./components/StackResumeLinkProvider";
 
 const historyStore = new HistoryStore();
 
@@ -15,6 +16,9 @@ const router = createRouter({
   defaultStaleTime: 5000,
   scrollRestoration: true,
   history: createMemoryHistory(routeTree, historyStore),
+  context: {
+    stackNavigatorLocationsStore: createStackResumeLinkStore(),
+  },
 })
 
 // Register things for typesafety

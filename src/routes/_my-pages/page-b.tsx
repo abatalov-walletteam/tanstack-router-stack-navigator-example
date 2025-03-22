@@ -1,5 +1,4 @@
 import {createFileRoute, Outlet} from '@tanstack/react-router'
-import {StackResumeLink} from "../../components/StackResumeLink";
 
 export const Route = createFileRoute('/_my-pages/page-b')(
   {
