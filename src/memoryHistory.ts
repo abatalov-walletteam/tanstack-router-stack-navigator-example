@@ -38,18 +38,16 @@ export function createMemoryHistory(
   const historyEntries: HistoryEntry[] = opts.initialEntries.map(
     (entry, index) => {
       const href = typeof entry === "string" ? entry : entry.href;
-      // todo::maybe `assignKeyAndIndex` is not needed for the custom history realisation?
-      const historyLocation = parseHref(
+
+      const historyLocation = prepareHistoryLocationAndStackNavigator(
         href,
+        // todo::maybe `assignKeyAndIndex` is not needed for the custom history realisation?
         assignKeyAndIndex(
           index,
           typeof entry === "string" ? undefined : entry.state,
         ),
-      );
-
-      assignStackNavigatorRouteIdState(
-        historyLocation,
-        getStackedNavigatorRoute(utilityRouter, historyLocation)?.id,
+        utilityRouter,
+        undefined,
       );
 
       return {
@@ -66,21 +64,51 @@ export function createMemoryHistory(
   let previousStackNavigator =
     historyEntries[historyStore.index].historyLocation.state.stackNavigator;
 
+  const popStackNavigatorEntries = (
+    stackNavigatorToPop: string | boolean | undefined,
+  ) => {
+    if (typeof stackNavigatorToPop !== "string") return;
+
+    const { stackStartIndex = 0, stackEndIndex } = findStackNavigatorIndices(
+      historyEntries,
+      stackNavigatorToPop,
+      undefined,
+    );
+
+    if (stackEndIndex !== undefined) {
+      historyEntries.splice(
+        stackStartIndex,
+        stackEndIndex - stackStartIndex + 1,
+      );
+
+      historyStore.index = Math.max(stackStartIndex - 1, 0);
+
+      previousStackNavigator =
+        historyEntries[historyStore.index]?.historyLocation.state
+          .stackNavigator;
+    }
+  };
+
   return createHistory({
     getLocation: () => {
       return historyEntries[historyStore.index].historyLocation;
     },
     getLength: () => historyEntries.length,
     pushState: (href: string, state: ParsedHistoryState) => {
-      const { historyLocation, stackNavigator } =
-        prepareHistoryLocationAndStackNavigator(href, state, utilityRouter);
+      const historyLocation = prepareHistoryLocationAndStackNavigator(
+        href,
+        state,
+        utilityRouter,
+        previousStackNavigator,
+      );
+
+      popStackNavigatorEntries(historyLocation.state.popStackNavigator);
+
+      const stackNavigator = historyLocation.state.stackNavigator;
 
       if (stackNavigator && stackNavigator !== previousStackNavigator) {
-        const {
-          stackStartIndex = 0,
-          stackEndIndex,
-          hrefStackEndIndex,
-        } = findStackNavigatorIndices(historyEntries, stackNavigator, href);
+        const { stackStartIndex = 0, stackEndIndex } =
+          findStackNavigatorIndices(historyEntries, stackNavigator, href);
 
         if (stackEndIndex !== undefined) {
           const stackEntries = historyEntries.splice(
@@ -113,8 +141,16 @@ export function createMemoryHistory(
       historyStore.index = Math.max(historyEntries.length - 1, 0);
     },
     replaceState: (href: string, state: ParsedHistoryState) => {
-      const { historyLocation, stackNavigator } =
-        prepareHistoryLocationAndStackNavigator(href, state, utilityRouter);
+      const historyLocation = prepareHistoryLocationAndStackNavigator(
+        href,
+        state,
+        utilityRouter,
+        previousStackNavigator,
+      );
+
+      popStackNavigatorEntries(historyLocation.state.popStackNavigator);
+
+      const stackNavigator = historyLocation.state.stackNavigator;
 
       if (stackNavigator && stackNavigator !== previousStackNavigator) {
         const { stackStartIndex = 0, stackEndIndex } =
@@ -204,22 +240,11 @@ function createRandomKey() {
   return (Math.random() + 1).toString(36).substring(7);
 }
 
-function assignStackNavigatorRouteIdState(
-  historyLocation: HistoryLocation,
-  stackNavigatorRoute: string | undefined,
-) {
-  Object.assign(historyLocation, {
-    state: {
-      ...historyLocation.state,
-      stackNavigator: stackNavigatorRoute,
-    } satisfies HistoryState,
-  });
-}
-
 function prepareHistoryLocationAndStackNavigator(
   href: string,
   state: ParsedHistoryState,
   utilityRouter: Router<any>,
+  previousStackNavigator: string | undefined,
 ) {
   const historyLocation = parseHref(href, state);
   const stackNavigator =
@@ -228,9 +253,22 @@ function prepareHistoryLocationAndStackNavigator(
       | string
       | undefined);
 
-  assignStackNavigatorRouteIdState(historyLocation, stackNavigator);
+  const popStackNavigator =
+    typeof historyLocation.state.popStackNavigator === "string"
+      ? historyLocation.state.popStackNavigator
+      : typeof historyLocation.state.popStackNavigator === "boolean"
+        ? previousStackNavigator
+        : undefined;
 
-  return { historyLocation, stackNavigator };
+  Object.assign(historyLocation, {
+    state: {
+      ...historyLocation.state,
+      stackNavigator,
+      popStackNavigator,
+    } satisfies HistoryState,
+  });
+
+  return historyLocation;
 }
 
 function findStackNavigatorIndices(
@@ -240,6 +278,7 @@ function findStackNavigatorIndices(
 ) {
   let stackStartIndex;
   let stackEndIndex;
+  // todo::is this still needed?
   let hrefStackEndIndex;
 
   for (let i = historyEntries.length - 1; i >= 0; i--) {
@@ -248,6 +287,9 @@ function findStackNavigatorIndices(
     if (entry.historyLocation.state.stackNavigator === stackNavigator) {
       if (stackEndIndex === undefined) {
         stackEndIndex = i;
+      }
+      if (i === 0) {
+        stackStartIndex = i;
       }
 
       if (hrefStackEndIndex === undefined && entry.href === href) {
