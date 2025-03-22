@@ -43,6 +43,7 @@ declare module "@tanstack/history" {
     __tempKey?: string;
     __hashScrollIntoViewOptions?: boolean | ScrollIntoViewOptions;
     stackNavigatorRouteId?: string;
+    stackNavigator?: string;
   }
 }
 
