@@ -66,72 +66,29 @@ export function createMemoryHistory(
   let previousStackNavigator =
     historyEntries[historyStore.index].historyLocation.state.stackNavigator;
 
-  console.log("🚐 Initial history entries", historyEntries);
-
   return createHistory({
     getLocation: () => {
-      console.log(
-        "📬",
-        historyEntries.map((entry) => entry.href),
-      );
       return historyEntries[historyStore.index].historyLocation;
     },
     getLength: () => historyEntries.length,
     pushState: (href: string, state: ParsedHistoryState) => {
-      const historyLocation = parseHref(href, state);
-
-      const stackNavigator =
-        historyLocation.state.stackNavigator ??
-        (getStackedNavigatorRoute(utilityRouter, historyLocation)?.id as
-          | string
-          | undefined);
-
-      assignStackNavigatorRouteIdState(historyLocation, stackNavigator);
-
-      let stackStartIndex;
-      let stackEndIndex;
-      let hrefStackEndIndex;
+      const { historyLocation, stackNavigator } =
+        prepareHistoryLocationAndStackNavigator(href, state, utilityRouter);
 
       if (stackNavigator && stackNavigator !== previousStackNavigator) {
-        for (let i = historyEntries.length - 1; i >= 0; i--) {
-          const entry = historyEntries[i];
-
-          if (entry.historyLocation.state.stackNavigator === stackNavigator) {
-            if (stackEndIndex === undefined) {
-              stackEndIndex = i;
-            }
-
-            if (hrefStackEndIndex === undefined && entry.href === href) {
-              hrefStackEndIndex = i;
-            }
-          } else if (stackEndIndex !== undefined) {
-            stackStartIndex = i + 1;
-            break;
-          }
-        }
+        const {
+          stackStartIndex = 0,
+          stackEndIndex,
+          hrefStackEndIndex,
+        } = findStackNavigatorIndices(historyEntries, stackNavigator, href);
 
         if (stackEndIndex !== undefined) {
-          stackStartIndex = stackStartIndex ?? 0;
-
           const stackEntries = historyEntries.splice(
             stackStartIndex,
             stackEndIndex - stackStartIndex + 1,
           );
           stackEntries.splice(stackEntries.length - 1);
           historyEntries.push(...stackEntries);
-
-          console.log(
-            "🪄",
-            {
-              historyEntries: structuredClone(historyEntries),
-              stackEntries: structuredClone(stackEntries),
-            },
-            {
-              stackStartIndex,
-              stackEndIndex,
-              hrefStackEndIndex: hrefStackEndIndex,
-            },
-          );
 
           historyStore.index = historyEntries.length - 1;
         }
@@ -141,12 +98,6 @@ export function createMemoryHistory(
       ) {
         historyEntries.splice(historyEntries.length - 1);
       }
-
-      console.log(
-        "Stacked Navigator",
-        stackNavigator ? "✅" : "✖️",
-        stackNavigator,
-      );
 
       previousStackNavigator = stackNavigator;
 
@@ -162,35 +113,14 @@ export function createMemoryHistory(
       historyStore.index = Math.max(historyEntries.length - 1, 0);
     },
     replaceState: (href: string, state: ParsedHistoryState) => {
-      const historyLocation = parseHref(href, state);
-      const stackNavigator =
-        historyLocation.state.stackNavigator ??
-        (getStackedNavigatorRoute(utilityRouter, historyLocation)?.id as
-          | string
-          | undefined);
-
-      assignStackNavigatorRouteIdState(historyLocation, stackNavigator);
+      const { historyLocation, stackNavigator } =
+        prepareHistoryLocationAndStackNavigator(href, state, utilityRouter);
 
       if (stackNavigator && stackNavigator !== previousStackNavigator) {
-        let stackStartIndex;
-        let stackEndIndex;
-
-        for (let i = historyEntries.length - 1; i >= 0; i--) {
-          const entry = historyEntries[i];
-
-          if (entry.historyLocation.state.stackNavigator === stackNavigator) {
-            if (stackEndIndex === undefined) {
-              stackEndIndex = i;
-            }
-          } else if (stackEndIndex !== undefined) {
-            stackStartIndex = i + 1;
-            break;
-          }
-        }
+        const { stackStartIndex = 0, stackEndIndex } =
+          findStackNavigatorIndices(historyEntries, stackNavigator, undefined);
 
         if (stackEndIndex !== undefined) {
-          stackStartIndex = stackStartIndex ?? 0;
-
           const stackEntries = historyEntries.splice(
             stackStartIndex,
             stackEndIndex - stackStartIndex + 1,
@@ -284,4 +214,54 @@ function assignStackNavigatorRouteIdState(
       stackNavigator: stackNavigatorRoute,
     } satisfies HistoryState,
   });
+}
+
+function prepareHistoryLocationAndStackNavigator(
+  href: string,
+  state: ParsedHistoryState,
+  utilityRouter: Router<any>,
+) {
+  const historyLocation = parseHref(href, state);
+  const stackNavigator =
+    historyLocation.state.stackNavigator ??
+    (getStackedNavigatorRoute(utilityRouter, historyLocation)?.id as
+      | string
+      | undefined);
+
+  assignStackNavigatorRouteIdState(historyLocation, stackNavigator);
+
+  return { historyLocation, stackNavigator };
+}
+
+function findStackNavigatorIndices(
+  historyEntries: HistoryEntry[],
+  stackNavigator: string,
+  href: string | undefined,
+) {
+  let stackStartIndex;
+  let stackEndIndex;
+  let hrefStackEndIndex;
+
+  for (let i = historyEntries.length - 1; i >= 0; i--) {
+    const entry = historyEntries[i];
+
+    if (entry.historyLocation.state.stackNavigator === stackNavigator) {
+      if (stackEndIndex === undefined) {
+        stackEndIndex = i;
+      }
+
+      if (hrefStackEndIndex === undefined && entry.href === href) {
+        hrefStackEndIndex = i;
+      }
+    } else if (stackEndIndex !== undefined) {
+      stackStartIndex = i + 1;
+      break;
+    }
+  }
+
+  return {
+    stackStartIndex,
+    stackEndIndex,
+    hrefStackEndIndex,
+  };
 }
