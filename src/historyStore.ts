@@ -1,41 +1,38 @@
-import {createContext, useContext, useSyncExternalStore} from 'react'
+import { createContext, useContext, useSyncExternalStore } from "react";
 
-type Listener = () => void
+type Listener = () => void;
 
 export class HistoryStore {
-  private _index: number = 0
-  private listeners: Set<Listener> = new Set()
+  private _index: number = 0;
+  private listeners: Set<Listener> = new Set();
 
   subscribe = (listener: Listener) => {
-    this.listeners.add(listener)
+    this.listeners.add(listener);
     return () => {
-      this.listeners.delete(listener)
-    }
-  }
+      this.listeners.delete(listener);
+    };
+  };
 
   private emitChange = () => {
-    this.listeners.forEach(listener => listener())
-  }
+    this.listeners.forEach((listener) => listener());
+  };
 
   get index(): number {
-    return this._index
+    return this._index;
   }
 
   set index(newIndex: number) {
     if (newIndex !== this._index) {
-      this._index = newIndex
-      this.emitChange()
+      this._index = newIndex;
+      this.emitChange();
     }
   }
 }
 
-export const HistoryStoreContext = createContext<HistoryStore | null>(null)
+export const HistoryStoreContext = createContext<HistoryStore | null>(null);
 
 export const useHistoryIndex = () => {
-  const historyStore = useContext(HistoryStoreContext)!
+  const historyStore = useContext(HistoryStoreContext)!;
 
-  return useSyncExternalStore(
-    historyStore.subscribe,
-    () => historyStore.index
-  )
-} 
+  return useSyncExternalStore(historyStore.subscribe, () => historyStore.index);
+};

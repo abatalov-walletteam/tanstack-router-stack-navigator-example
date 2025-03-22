@@ -6,17 +6,18 @@
     "dev": "vite --port 3000",
     "build": "vite build && tsc --noEmit",
     "serve": "vite preview",
-    "start": "vite"
+    "start": "vite",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.114.25",
     "@tanstack/react-router-devtools": "^1.114.25",
     "@tanstack/router-plugin": "^1.114.25",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "redaxios": "^0.5.1",
-    "postcss": "^8.5.1",
-    "autoprefixer": "^10.4.20",
     "tailwindcss": "^3.4.17",
     "zod": "^3.24.2"
   },
@@ -24,6 +25,9 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "git-format-staged": "^3.1.1",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^6.1.0"
   }

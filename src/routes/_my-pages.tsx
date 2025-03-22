@@ -1,11 +1,11 @@
-import {createFileRoute, Link, Outlet} from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_my-pages')({
+export const Route = createFileRoute("/_my-pages")({
   component: LayoutComponent,
   staticData: {
-    stackNavigator: true
+    stackNavigator: true,
   },
-})
+});
 
 function LayoutComponent() {
   return (
@@ -15,7 +15,7 @@ function LayoutComponent() {
         <Link
           to="/page-a"
           activeProps={{
-            className: 'font-bold',
+            className: "font-bold",
           }}
         >
           Go Page A
@@ -23,7 +23,7 @@ function LayoutComponent() {
         <Link
           to="/page-b"
           activeProps={{
-            className: 'font-bold',
+            className: "font-bold",
           }}
         >
           Go Page B
@@ -33,5 +33,5 @@ function LayoutComponent() {
         <Outlet />
       </div>
     </div>
-  )
+  );
 }

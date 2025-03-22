@@ -1,9 +1,9 @@
-import {createFileRoute, Link} from '@tanstack/react-router'
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_my-pages/page-b/_my-modal/b3')({
+export const Route = createFileRoute("/_my-pages/page-b/_my-modal/b3")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-  return <Link to="/page-b">Close</Link>
+  return <Link to="/page-b">Close</Link>;
 }

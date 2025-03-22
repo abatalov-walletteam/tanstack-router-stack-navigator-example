@@ -1,10 +1,8 @@
-import {createFileRoute, Outlet} from '@tanstack/react-router'
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_my-pages/page-b')(
-  {
-    component: LayoutBComponent,
-  },
-)
+export const Route = createFileRoute("/_my-pages/page-b")({
+  component: LayoutBComponent,
+});
 
 function LayoutBComponent() {
   return (
