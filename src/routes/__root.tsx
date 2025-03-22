@@ -2,11 +2,11 @@ import {
   createRootRouteWithContext,
   Link,
   Outlet,
+  useCanGoBack,
   useRouter,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { StackResumeLink } from "../components/StackResumeLink";
-import { useHistoryIndex } from "../historyStore";
 import {
   createStackResumeLinkStore,
   StackResumeLinkProvider,
@@ -28,14 +28,14 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   const router = useRouter();
-  const index = useHistoryIndex();
   const { stackNavigatorLocationsStore } = Route.useRouteContext();
+  const canGoBack = useCanGoBack();
 
   return (
     <StackResumeLinkProvider store={stackNavigatorLocationsStore}>
       <div className="p-2 flex gap-2 text-lg border-b">
         <button
-          disabled={!index}
+          disabled={!canGoBack}
           className="back-button"
           onClick={() => router.history.back()}
         >

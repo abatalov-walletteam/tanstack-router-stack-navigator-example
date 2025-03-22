@@ -4,10 +4,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import { createMemoryHistory } from "./memoryHistory";
-import { HistoryStore, HistoryStoreContext } from "./historyStore";
 import { createStackResumeLinkStore } from "./components/StackResumeLinkProvider";
-
-const historyStore = new HistoryStore();
 
 // Set up a Router instance
 const router = createRouter({
@@ -15,7 +12,7 @@ const router = createRouter({
   defaultPreload: "intent",
   defaultStaleTime: 5000,
   scrollRestoration: true,
-  history: createMemoryHistory(routeTree, historyStore),
+  history: createMemoryHistory(routeTree),
   context: {
     stackNavigatorLocationsStore: createStackResumeLinkStore(),
   },
@@ -51,9 +48,5 @@ const rootElement = document.getElementById("app")!;
 
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <HistoryStoreContext value={historyStore}>
-      <RouterProvider router={router} />
-    </HistoryStoreContext>,
-  );
+  root.render(<RouterProvider router={router} />);
 }
