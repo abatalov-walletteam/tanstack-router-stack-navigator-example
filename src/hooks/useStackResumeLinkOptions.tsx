@@ -1,5 +1,11 @@
 import { ToOptions, useMatches, useRouter } from "@tanstack/react-router";
-import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import { createParsedLocation } from "../memoryHistory";
 import { StackResumeLinkContext } from "../components/StackResumeLinkProvider";
 
@@ -28,7 +34,7 @@ export function useStackResumeLinkOptions<T extends ToOptions>(
       "useStackNavigatorLastLinkOptions must be used within a StackNavigatorLinkToOptionsProvider",
     );
 
-  const location = useSyncExternalStore(
+  const restoredLocation = useSyncExternalStore(
     useCallback(
       (callback) => stackLinksStore.subscribe(linkStackNavigator, callback),
       [linkStackNavigator],
@@ -41,22 +47,28 @@ export function useStackResumeLinkOptions<T extends ToOptions>(
     select: (routes) => routes.some((route) => route.id === linkStackNavigator),
   });
 
+  useEffect(() => {
+    if (toOptions.to === "/") console.log({ isLinkStackActive });
+  }, [isLinkStackActive]);
+
   const restoredToOptions = useMemo(() => {
     if (isLinkStackActive) return;
 
-    const route = location
-      ? router.getMatchedRoutes(createParsedLocation(location)).foundRoute
-      : undefined;
+    const parsedLocation =
+      restoredLocation && createParsedLocation(restoredLocation);
+    const { foundRoute, routeParams } = parsedLocation
+      ? router.getMatchedRoutes(parsedLocation)
+      : {};
 
-    if (route) {
+    if (foundRoute) {
       return {
-        to: route.to,
+        to: foundRoute.to,
         from: undefined,
         mask: undefined,
-        params: route.options.params,
-        search: route.options.search,
-        state: location?.state,
-        hash: location?.hash,
+        params: routeParams,
+        search: parsedLocation?.search,
+        state: restoredLocation?.state,
+        hash: restoredLocation?.hash,
       } as T;
     }
   }, [isLinkStackActive]);

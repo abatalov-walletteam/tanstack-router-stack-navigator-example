@@ -11,7 +11,7 @@ import {
   createStackResumeLinkStore,
   StackResumeLinkProvider,
 } from "../components/StackResumeLinkProvider";
-
+import { BottomNavigation } from "../components/BottomNavigation";
 export const Route = createRootRouteWithContext<{
   stackNavigatorLocationsStore: ReturnType<typeof createStackResumeLinkStore>;
 }>()({
@@ -32,48 +32,17 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
-  const router = useRouter();
   const { stackNavigatorLocationsStore } = Route.useRouteContext();
-  const canGoBack = useCanGoBack();
 
   return (
     <StackResumeLinkProvider store={stackNavigatorLocationsStore}>
-      <div className="p-2 flex gap-2 text-lg border-b">
-        <button
-          disabled={!canGoBack}
-          className="back-button"
-          onClick={() => router.history.back()}
-        >
-          🔙
-        </button>
-        <StackResumeLink
-          to="/"
-          activeProps={{
-            className: "font-bold",
-          }}
-          activeOptions={{ exact: true }}
-        >
-          Home
-        </StackResumeLink>{" "}
-        <StackResumeLink
-          to="/posts"
-          activeProps={{
-            className: "font-bold",
-          }}
-        >
-          Posts
-        </StackResumeLink>{" "}
-        <StackResumeLink
-          to="/page-a"
-          activeProps={{
-            className: "font-bold",
-          }}
-        >
-          Stack AB
-        </StackResumeLink>
+      <div className="min-h-screen flex flex-col">
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+        <BottomNavigation />
       </div>
-      <hr />
-      <Outlet />
+
       <TanStackRouterDevtools position="bottom-right" />
     </StackResumeLinkProvider>
   );
