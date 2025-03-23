@@ -1,11 +1,5 @@
 import { ToOptions, useMatches, useRouter } from "@tanstack/react-router";
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import { createParsedLocation } from "../memoryHistory";
 import { StackResumeLinkContext } from "../components/StackResumeLinkProvider";
 
@@ -19,12 +13,12 @@ export function useStackResumeLinkOptions<T extends ToOptions>(
       router.buildLocation(toOptions),
     );
 
-    return routesMatch.matchedRoutes
+    const stackNavigatorRoute = routesMatch.matchedRoutes
       .slice()
       .reverse()
-      .find((route) => route.options.staticData?.stackNavigator)?.id as
-      | string
-      | undefined;
+      .find((route) => route.options.staticData?.stackNavigator);
+
+    return stackNavigatorRoute?.id as string | undefined;
   }, [router, toOptions]);
 
   const stackLinksStore = useContext(StackResumeLinkContext);
@@ -44,12 +38,13 @@ export function useStackResumeLinkOptions<T extends ToOptions>(
   );
 
   const isLinkStackActive = useMatches({
-    select: (routes) => routes.some((route) => route.id === linkStackNavigator),
+    select: (routes) => {
+      return routes.some((route) => {
+        // `routeId` is not "compiled" route id without params
+        return route.routeId === linkStackNavigator;
+      });
+    },
   });
-
-  useEffect(() => {
-    if (toOptions.to === "/") console.log({ isLinkStackActive });
-  }, [isLinkStackActive]);
 
   const restoredToOptions = useMemo(() => {
     if (isLinkStackActive) return;

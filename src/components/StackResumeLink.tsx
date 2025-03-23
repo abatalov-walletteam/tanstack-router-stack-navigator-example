@@ -10,9 +10,6 @@ export const StackResumeLink: LinkComponent<"a"> = forwardRef(
     ref: ForwardedRef<HTMLAnchorElement>,
   ) {
     const toOptions = useStackResumeLinkOptions(props);
-    useEffect(() => {
-      if (props.to === "/") console.log(toOptions);
-    }, [toOptions]);
 
     return <Link {...toOptions} ref={ref} />;
   },

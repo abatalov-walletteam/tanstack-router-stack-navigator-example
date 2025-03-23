@@ -85,7 +85,6 @@ export function createMemoryHistory(
         historyEntries[index]?.historyLocation.state.stackNavigator;
     }
   };
-  console.log({ previousStackNavigator });
 
   return createHistory({
     getLocation: () => {
