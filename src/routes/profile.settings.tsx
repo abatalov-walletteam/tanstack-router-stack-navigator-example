@@ -2,9 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/profile/settings")({
   component: SettingsPage,
-  staticData: {
-    stackNavigator: true,
-  },
 });
 
 function SettingsPage() {
