@@ -16,6 +16,11 @@ export const Route = createRootRouteWithContext<{
   stackNavigatorLocationsStore: ReturnType<typeof createStackResumeLinkStore>;
 }>()({
   component: RootComponent,
+  context: ({ location }) => {
+    return {
+      stackNavigatorLocationsStore: createStackResumeLinkStore(location),
+    };
+  },
   notFoundComponent: () => {
     return (
       <div>

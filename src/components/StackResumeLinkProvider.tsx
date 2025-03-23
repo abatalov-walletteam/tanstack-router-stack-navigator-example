@@ -1,87 +1,83 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-} from "react";
-import type { ToOptions } from "@tanstack/router-core";
-import { ReactNode, useMatches } from "@tanstack/react-router";
+import { createContext, useEffect } from "react";
+import { ReactNode, useRouter } from "@tanstack/react-router";
+import { HistoryLocation } from "@tanstack/history";
+import { ParsedLocation } from "@tanstack/router-core";
 
-type StackResumeLinkStore = {
-  subscribe: (routeId: string, callback: () => void) => () => void;
-  getSnapshot: (routeId: string) => ToOptions | undefined;
-  set: (stackRouteId: string, location: ToOptions) => void;
+type StackResumeLinkStore<T extends HistoryLocation> = {
+  subscribe: (stackId: string | undefined, callback: () => void) => () => void;
+  getSnapshot: (stackId: string | undefined) => T | undefined;
+  set: (location: T) => void;
+  delete: (stackId: string) => void;
 };
 
-export const createStackResumeLinkStore = (): StackResumeLinkStore => {
-  const state = new Map<string, ToOptions>();
+export const createStackResumeLinkStore = (
+  ...initialLocation: Array<HistoryLocation | ParsedLocation>
+): StackResumeLinkStore<HistoryLocation> => {
+  const state = new Map<string, HistoryLocation>();
   const routeListeners = new Map<string, Set<() => void>>();
 
-  return {
-    subscribe: (routeId: string, callback: () => void) => {
-      if (!routeListeners.has(routeId)) routeListeners.set(routeId, new Set());
-      routeListeners.get(routeId)!.add(callback);
+  initialLocation.forEach((location) => {
+    if (location.state.stackNavigator)
+      state.set(
+        location.state.stackNavigator,
+        "searchStr" in location
+          ? {
+              href: location.href,
+              pathname: location.pathname,
+              search: location.searchStr,
+              hash: location.hash,
+              state: location.state,
+            }
+          : location,
+      );
+  });
 
-      return () => routeListeners.get(routeId)?.delete(callback);
+  return {
+    subscribe: (stackId, callback) => {
+      if (stackId === undefined) return () => {};
+
+      if (!routeListeners.has(stackId)) routeListeners.set(stackId, new Set());
+      routeListeners.get(stackId)!.add(callback);
+      return () => routeListeners.get(stackId)?.delete(callback);
     },
-    getSnapshot: (routeId: string) => state.get(routeId),
-    set: (stackRouteId: string, location: ToOptions) => {
-      state.set(stackRouteId, location);
-      routeListeners.get(stackRouteId)?.forEach((listener) => listener());
+    getSnapshot: (stackId) => state.get(stackId!),
+    set: (location) => {
+      if (!location.state.stackNavigator) return;
+
+      state.set(location.state.stackNavigator, location);
+      routeListeners
+        .get(location.state.stackNavigator)
+        ?.forEach((listener) => listener());
+    },
+    delete: (stackId) => {
+      state.delete(stackId);
+      routeListeners.get(stackId)?.forEach((listener) => listener());
     },
   };
 };
 
-const StackResumeLinkContext = createContext<StackResumeLinkStore | null>(null);
+export const StackResumeLinkContext =
+  createContext<StackResumeLinkStore<HistoryLocation> | null>(null);
 
 export function StackResumeLinkProvider({
   children,
   store,
 }: {
   children: ReactNode;
-  store: StackResumeLinkStore;
+  store: StackResumeLinkStore<HistoryLocation>;
 }) {
-  const stackNavigatorRoutes = useMatches({
-    select(routes) {
-      return routes.some((route) => route.staticData.stackNavigator)
-        ? routes
-        : noopArray;
-    },
-  });
-
-  const stackNavigatorRoute = stackNavigatorRoutes
-    .slice()
-    .reverse()
-    .find((route) => route.staticData.stackNavigator);
-
-  const latestStackNavigatorRoutes = useRef(stackNavigatorRoutes);
-
-  console.log("⚖️stackNavigatorRoute?.routeId", stackNavigatorRoute?.routeId);
-
-  useEffect(
-    () => () => {
-      if (!stackNavigatorRoute?.routeId) return;
-      const lastRoute = latestStackNavigatorRoutes.current.at(-1);
-
-      if (lastRoute) {
-        store.set(
-          stackNavigatorRoute.routeId,
-          // @ts-expect-error
-          structuredClone({
-            to: lastRoute.fullPath,
-            search: lastRoute.search,
-            params: lastRoute.params,
-          }),
-        );
-      }
-    },
-    [stackNavigatorRoute?.routeId],
-  );
+  const router = useRouter();
 
   useEffect(() => {
-    latestStackNavigatorRoutes.current = stackNavigatorRoutes;
-  });
+    const subscribe = router.history.subscribe;
+
+    return subscribe(({ location }) => {
+      store.set(location);
+
+      if (typeof location.state.popStackNavigator === "string")
+        store.delete(location.state.popStackNavigator);
+    });
+  }, [router.history.subscribe, store]);
 
   return (
     <StackResumeLinkContext.Provider value={store}>
@@ -89,22 +85,3 @@ export function StackResumeLinkProvider({
     </StackResumeLinkContext.Provider>
   );
 }
-
-export function useStackResumeLinkOptions(routeId: string) {
-  const store = useContext(StackResumeLinkContext);
-
-  if (!store)
-    throw new Error(
-      "useStackNavigatorLastLinkOptions must be used within a StackNavigatorLinkToOptionsProvider",
-    );
-
-  const toOptions = useSyncExternalStore(
-    (callback) => store.subscribe(routeId, callback),
-    () => store.getSnapshot(routeId),
-    () => store.getSnapshot(routeId),
-  );
-
-  return { toOptions };
-}
-
-const noopArray = [] as const;

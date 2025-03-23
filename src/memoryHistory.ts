@@ -188,7 +188,7 @@ export function createMemoryHistory(
   });
 }
 
-function createParsedLocation(
+export function createParsedLocation(
   historyLocation: HistoryLocation,
 ): ParsedLocation {
   return {

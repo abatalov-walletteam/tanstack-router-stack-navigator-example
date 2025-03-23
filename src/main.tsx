@@ -14,7 +14,7 @@ const router = createRouter({
   scrollRestoration: true,
   history: createMemoryHistory(routeTree),
   context: {
-    stackNavigatorLocationsStore: createStackResumeLinkStore(),
+    stackNavigatorLocationsStore: undefined!,
   },
 });
 

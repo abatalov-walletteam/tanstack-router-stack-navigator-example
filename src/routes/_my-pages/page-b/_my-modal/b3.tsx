@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_my-pages/page-b/_my-modal/b3")({
 function RouteComponent() {
   return (
     <Link to="/page-b" state={{ popStackNavigator: true }}>
-      Close
+      Pop Sub Stack 🍭
     </Link>
   );
 }

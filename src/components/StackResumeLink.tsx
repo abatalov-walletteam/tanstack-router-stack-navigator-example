@@ -1,46 +1,19 @@
-import {
-  Link,
-  LinkComponent,
-  useMatches,
-  useRouter,
-} from "@tanstack/react-router";
-import { forwardRef, useMemo } from "react";
-import { useStackResumeLinkOptions } from "./StackResumeLinkProvider";
+import { Link, LinkComponent, ToOptions } from "@tanstack/react-router";
+import { ForwardedRef, forwardRef, useEffect } from "react";
+
+import { useStackResumeLinkOptions } from "../hooks/useStackResumeLinkOptions";
 
 // @ts-expect-error
 export const StackResumeLink: LinkComponent<"a"> = forwardRef(
-  function StackResumeLink(props, ref) {
-    const router = useRouter();
+  function StackResumeLink(
+    props: ToOptions,
+    ref: ForwardedRef<HTMLAnchorElement>,
+  ) {
+    const toOptions = useStackResumeLinkOptions(props);
+    useEffect(() => {
+      if (props.to === "/") console.log(toOptions);
+    }, [toOptions]);
 
-    const linkStackNavigatorRoute = useMemo(() => {
-      const routesMatch = router.getMatchedRoutes(
-        router.buildLocation(
-          // @ts-expect-error
-          props,
-        ),
-      );
-
-      return routesMatch.matchedRoutes
-        .slice()
-        .reverse()
-        .find((route) => route.options.staticData?.stackNavigator);
-    }, [router, props]);
-
-    const isLinkStackActive = useMatches({
-      select: (routes) =>
-        routes.some((route) => route.id === linkStackNavigatorRoute?.id),
-    });
-
-    const { toOptions: previousParsedLocation } = useStackResumeLinkOptions(
-      linkStackNavigatorRoute?.id,
-    );
-
-    if (!isLinkStackActive && previousParsedLocation) {
-      // @ts-expect-error
-      return <Link {...props} {...previousParsedLocation} ref={ref} />;
-    }
-
-    // @ts-expect-error
-    return <Link {...props} ref={ref} />;
+    return <Link {...toOptions} ref={ref} />;
   },
 );
