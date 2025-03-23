@@ -1,5 +1,9 @@
-import * as React from "react";
-import { ErrorComponent, createFileRoute, Await } from "@tanstack/react-router";
+import {
+  ErrorComponent,
+  createFileRoute,
+  Await,
+  Link,
+} from "@tanstack/react-router";
 import { fetchPost, fetchPosts, PostType } from "../posts";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Feed } from "../components/Feed";
@@ -28,7 +32,16 @@ function PostComponent() {
 
   return (
     <article className="p-4">
-      <h4 className="text-xl font-bold underline">{post.title}</h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xl font-bold underline">{post.title}</h4>
+        <Link
+          to="/"
+          className="px-3 py-1 text-sm border rounded hover:bg-gray-100"
+          state={{ popStackNavigator: true }}
+        >
+          Закрыть стек
+        </Link>
+      </div>
       <div className="text-sm">{post.body}</div>
 
       <Await promise={feed} fallback={<div>⏳ Loading...</div>}>

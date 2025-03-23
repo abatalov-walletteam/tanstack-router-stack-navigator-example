@@ -12,8 +12,11 @@ function SettingsPage() {
         className="mb-4 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 inline-block"
         replace
       >
-        ← Назад
+        Закрыть настройки
       </Link>
+      <p>
+        <code>При нажатии на 🔙 активируется предыдущий стек</code>
+      </p>
 
       <h1 className="text-2xl font-bold mb-6">Настройки профиля</h1>
 

@@ -50,6 +50,9 @@ function SearchPage() {
 
   return (
     <section className="p-4">
+      <code className="mb-2 block">
+        Параметры поиска восстановятся, после перехода на другой стек, и обратно
+      </code>
       <div className="sticky top-0 bg-white pb-4 space-y-2">
         <input
           type="search"

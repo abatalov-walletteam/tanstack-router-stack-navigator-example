@@ -15,9 +15,11 @@ function ProfilePage() {
           <Link
             to="/profile/settings"
             className="text-blue-500 hover:underline mt-2 inline-block"
+            replace
           >
             Настройки
-          </Link>
+          </Link>{" "}
+          <code>(replace state*)</code>
         </div>
       </div>
     </div>
