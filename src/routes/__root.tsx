@@ -12,6 +12,7 @@ import {
   StackResumeLinkProvider,
 } from "../components/StackResumeLinkProvider";
 import { BottomNavigation } from "../components/BottomNavigation";
+
 export const Route = createRootRouteWithContext<{
   stackNavigatorLocationsStore: ReturnType<typeof createStackResumeLinkStore>;
 }>()({
@@ -36,11 +37,13 @@ function RootComponent() {
 
   return (
     <StackResumeLinkProvider store={stackNavigatorLocationsStore}>
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-1 overflow-auto">
+      <div className="min-h-screen flex flex-col relative">
+        <main className="flex-1 overflow-auto pb-[60px]">
           <Outlet />
         </main>
-        <BottomNavigation />
+        <div className="fixed bottom-0 left-0 right-0">
+          <BottomNavigation />
+        </div>
       </div>
 
       <TanStackRouterDevtools position="bottom-right" />
